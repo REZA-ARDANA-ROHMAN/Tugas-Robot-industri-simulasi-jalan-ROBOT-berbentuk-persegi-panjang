@@ -1,0 +1,99 @@
+import rclpy
+from rclpy.node import Node
+from geometry_msgs.msg import Twist
+import time
+import math
+
+
+class RectangleNode(Node):
+    def __init__(self):
+        super().__init__('rectangle_node')
+
+        self.publisher_ = self.create_publisher(Twist, 'cmd_vel', 10)
+        self.timer = self.create_timer(0.01, self.timer_callback)
+
+        self.linear_speed = 0.5
+        self.angular_speed = 0.5
+
+        self.long_side = 4.0
+        self.short_side = 2.0
+
+        self.long_time = self.long_side / self.linear_speed
+        self.short_time = self.short_side / self.linear_speed
+        self.turn_time = (math.pi / 2) / self.angular_speed
+
+        self.state = 0
+        self.state_start_time = time.monotonic()
+
+    def timer_callback(self):
+        msg = Twist()
+        elapsed = time.monotonic() - self.state_start_time
+
+        if self.state == 0:
+            msg.linear.x = self.linear_speed
+            if elapsed >= self.long_time:
+                self.next_state()
+
+        elif self.state == 1:
+            msg.angular.z = self.angular_speed
+            if elapsed >= self.turn_time:
+                self.next_state()
+
+        elif self.state == 2:
+            msg.linear.x = self.linear_speed
+            if elapsed >= self.short_time:
+                self.next_state()
+
+        elif self.state == 3:
+            msg.angular.z = self.angular_speed
+            if elapsed >= self.turn_time:
+                self.next_state()
+
+        elif self.state == 4:
+            msg.linear.x = self.linear_speed
+            if elapsed >= self.long_time:
+                self.next_state()
+
+        elif self.state == 5:
+            msg.angular.z = self.angular_speed
+            if elapsed >= self.turn_time:
+                self.next_state()
+
+        elif self.state == 6:
+            msg.linear.x = self.linear_speed
+            if elapsed >= self.short_time:
+                self.next_state()
+
+        elif self.state == 7:
+            msg.angular.z = self.angular_speed
+            if elapsed >= self.turn_time:
+                self.next_state()
+
+        elif self.state == 8:
+            self.publisher_.publish(msg)
+            self.timer.cancel()
+            return
+
+        self.publisher_.publish(msg)
+
+    def next_state(self):
+        self.state += 1
+        self.state_start_time = time.monotonic()
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = RectangleNode()
+
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if rclpy.ok():
+            node.destroy_node()
+            rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
